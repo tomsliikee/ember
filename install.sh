@@ -11,7 +11,8 @@ set -euo pipefail
 UUID="ember@thomashaiden"
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
-HOME_LINK="$DATA/ember"
+# The unit file and the hooks name this path, so it does not follow XDG_DATA_HOME.
+HOME_LINK="$HOME/.local/share/ember"
 TARGET="$DATA/gnome-shell/extensions/$UUID"
 UNIT_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
 FONT_DIR="$DATA/fonts"
@@ -52,6 +53,11 @@ fi
 command -v gjs >/dev/null || { echo "gjs is missing; it ships with GNOME Shell." >&2; exit 1; }
 command -v jq >/dev/null || { echo "jq is missing; install it first." >&2; exit 1; }
 
+shell="$(gnome-shell --version 2>/dev/null | grep -oE '[0-9]+' | head -n 1 || true)"
+if [ "$shell" != "50" ]; then
+    echo "This is GNOME Shell ${shell:-of an unknown version}; the extension names version 50 only and may not load." >&2
+fi
+
 link "$REPO" "$HOME_LINK"
 link "$REPO/extension" "$TARGET"
 
@@ -66,7 +72,7 @@ fi
 # sessions alike; they are how Ember knows that a session works. The file
 # is only extended, and only after asking.
 if ! grep -qs "ember-hook" "$SETTINGS"; then
-    read -r -p "Add Ember's hooks to $SETTINGS? [y/N] " answer
+    read -r -p "Add Ember's hooks to $SETTINGS? [y/N] " answer || answer=""
     if [[ "$answer" == [yY]* ]]; then
         # Claude Code that has never been configured has no settings yet.
         if [ -f "$SETTINGS" ]; then

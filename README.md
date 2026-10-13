@@ -47,6 +47,37 @@ The screenshots on this page show sample data.
 
 ---
 
+## Beside the Desktop App's Keep Awake
+
+The **Claude desktop app** has a setting of its own, **Keep computer awake while Claude works**. The two do different things and are meant to be on together.
+
+| | The app's setting | Ember |
+| :--- | :--- | :--- |
+| **Holds off** | Sleep from idleness | Sleep from closing the lid |
+| **Lid closed** | The machine sleeps | The machine stays awake while Claude works |
+| **Saves power** | No | Screen off, processor held back, everything else at rest |
+| **Ends** | Shortly after the work | After the minutes set, at the battery floor, or by heat; then the machine sleeps |
+
+Seen on the laptop with both on and the lid closed: the app holds one lock against idleness with GNOME's session manager and none for the lid; the two locks on the lid and on sleep in `systemd-inhibit --list` are Ember's.
+
+---
+
+## What It Draws
+
+Read on 2026-10-13 from the record on one laptop, an **HP EliteBook 840 G5** with a 47 Wh battery. These are a first night's numbers, not a benchmark.
+
+| State | Average | Over |
+| :--- | :--- | :--- |
+| **Lid closed**, Claude working, Ember holding | **2.65 W** | 30 minutes on battery |
+| **Asleep** | **0.33 W** | One sleep of 11.5 hours |
+| **Lid open** | About **12 W** | One stretch of 5 minutes, no session at work; too short for the menu's average |
+
+At 2.65 W an hour of work under the closed lid costs about **6 %** of that battery. The same hour was not measured with the lid open and Claude at work, so the saving itself is still a guess from the last row.
+
+With the lid closed and two sessions at work on mains power, the whole machine used **3.8 %** of its processor over 20 seconds, nearly all of it Claude; the processor stood at **36 °C** and had not passed **44 °C** in 80 minutes.
+
+---
+
 ## The Menu
 
 The mark in the top bar is a ring with a core: no core while Ember is off, a small one while it watches, a larger one while it holds the lid, and the whole ring for **Now**.
@@ -58,7 +89,7 @@ The mark in the top bar is a ring with a core: no core while Ember is off, a sma
 
 ### Power
 
-The one loud tile shows the power going out of the battery in **watts**, as the battery reports it, and the time that is left. Some batteries report no power between two readings; the tile then shows a dash.
+The one loud tile shows the power going out of the battery in **watts**, as the battery reports it, and the time that is left. On mains power it is the power going into the battery, and says so. Some batteries report no power while they discharge, the one of the laptop Ember was written on among them; the tile then shows a dash, and the averages behind the chevron are the number to go by.
 
 ### When the Lid Closes
 
@@ -171,6 +202,11 @@ gjs -m daemon/main.js --dry-run --lid-file /tmp/lid
 echo closed > /tmp/lid
 ```
 
+**Ask why the machine stayed awake, or why it slept.** Every change of who works and everything Ember switches is in the journal:
+```bash
+journalctl --user -u ember -f
+```
+
 **See what the record adds up to:**
 ```bash
 gjs -m tools/usage.js
@@ -197,7 +233,7 @@ The styles in **`tools/styles.json`** only change when a seed does. **`tools/der
 
 ## How It Works
 
-Three parts: **pure logic** that decides and is covered by **78** unit tests, a **service** that carries the decisions out, and a **menu** drawn with **St** and **Cairo**.
+Three parts: **pure logic** that decides and is covered by **80** unit tests, a **service** that carries the decisions out, and a **menu** drawn with **St** and **Cairo**.
 
 ```mermaid
 flowchart TD
@@ -302,21 +338,22 @@ Ember was written on 2026-10-12 and first run with a real lid on 2026-10-13.
 
 | Part | State | How |
 | :--- | :--- | :--- |
-| **Decisions, session tracking, choice of units and of the sensor, the record's sums, texts** | *tested* | 78 unit tests |
+| **Decisions, session tracking, choice of units and of the sensor, the record's sums, texts** | *tested* | 80 unit tests |
 | **Service, end to end** | *tested* | A dry run with a file standing in for the lid: closing, opening, **Now**, **Off** |
 | **Freezing and thawing, putting back after a crash** | *tested* | On a throwaway unit |
 | **Holding the lid from a user service** | *tested* | The lock appears in `systemd-inhibit --list` and goes with the process |
 | **Hooks in Claude Code** | *tested* | Sessions in a terminal and in the desktop app's Code tab are seen working and stopping |
-| **A real closed lid** | *tested* | On 2026-10-13: 24 commands ran through under a closed lid; after a second task the machine slept 2.5 minutes after its end, and again with the desktop app open, 2 minutes after the end |
+| **A real closed lid** | *tested* | On 2026-10-13: 24 commands ran through under a closed lid; after a second task the machine slept 2.5 minutes after its end, and again with the desktop app open, 2 minutes after the end. Later that day two sessions of the desktop app worked for 80 minutes under the closed lid |
+| **Screen off, sound muted, turbo off, services at rest** | *tested* | Read with the lid closed: the panel's DPMS state `Off`, the sink muted, `no_turbo` 1, and `frozen 1` in the control group of each of the seven units Ember had noted |
 | **Menu, light and dark, five styles** | *tested* | Rendered in a headless GNOME Shell 50.5 with sample states, also with Tally loaded beside it |
 | **Look on hover** | *tested* | A virtual pointer in the headless shell: nothing when crossing, the menu after resting, gone on leaving, held by a click, no look after closing with a click on the item. Not tried in a real session |
 | **A restart of the service** | *tested* in parts | With the lid open: the restarted service knew the working session at once and held the lid again; the bridge appeared in `systemd-inhibit --list`, ended on request and ended by itself 65 s after the last sign of life. A restart under a closed lid was not tried |
-| **Root helper** | *tested* | Called and undone in three runs, by the journal; the processor's files were not read back |
-| **Record of the draw** | *tested* | The sums by unit tests, the first lines in the file on the laptop. The lines around a sleep and an average from real readings were not seen |
+| **Root helper** | *tested* | Called and undone in three runs, by the journal; under a closed lid `no_turbo` read 1 and the energy preference `power`. That they are put back was not read |
+| **Record of the draw** | *tested* | The sums by unit tests; on the laptop the lines around four sleeps and the averages in the table above, worked out by `tools/usage.js` |
 | **Installing without existing Claude settings** | *tested* | Only the step that writes the hooks, on an empty file |
-| **Screen off, battery floor, heat** | *built* | Not seen happening |
+| **Battery floor, heat** | *built* | Not seen happening |
 | **No sensor** | *built* | The rule and the sentence are unit tested; the laptop has a sensor |
-| **Power saved** | *not measured* | The record is there to tell |
+| **Power saved** | *measured in part* | The draw with the lid closed and asleep is in the table above; the same work with the lid open is not |
 
 The extension reads no private part of GNOME Shell besides the place of the system menu in the top bar. The look on hover takes the menu out of the panel's menu manager for as long as it lasts, which is not a public interface and may change with a new version.
 

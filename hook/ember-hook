@@ -6,7 +6,8 @@
 # The event carries the prompt and the tools' input. None of that is
 # written: jq passes on the four fields Ember needs and drops the rest.
 command -v jq >/dev/null 2>&1 || exit 0
-dir="${XDG_RUNTIME_DIR:-/tmp}/ember/events"
+[ -n "${XDG_RUNTIME_DIR:-}" ] || exit 0
+dir="$XDG_RUNTIME_DIR/ember/events"
 mkdir -p "$dir" 2>/dev/null || exit 0
 # The control group names the terminal tab or app the session runs in.
 cgroup="$(sed -n 's/^0:://p' /proc/self/cgroup 2>/dev/null)"

@@ -58,11 +58,20 @@ export function prune(rows, now) {
     return rows.filter(row => now - row.at < KEEP_MS);
 }
 
+// The waking that ends the sleep noted at rows[index], or null when the
+// record has none before the next sleep. A sample may be taken in between:
+// the battery's change is noticed before the waking is announced.
+function wakingAfter(rows, index) {
+    for (let i = index + 1; i < rows.length && rows[i].state !== 'sleep'; i++) {
+        if (rows[i].state === 'wake')
+            return rows[i];
+    }
+    return null;
+}
+
 // What kind of time passed between a sample and the next one, or null when
-// it is not one of the three that are compared.
+// it is not one of the two that are compared. A sleep is counted apart.
 function kindOf(from, to) {
-    if (from.state === 'sleep')
-        return to.state === 'wake' ? 'asleep' : null;
     if (to.at - from.at > MAX_GAP_MS)
         return null;
     if (from.state === 'closed')
@@ -78,8 +87,11 @@ export function summarise(rows) {
     const sums = {working: {ms: 0, wh: 0}, closed: {ms: 0, wh: 0}, asleep: {ms: 0, wh: 0}};
     for (let i = 0; i + 1 < rows.length; i++) {
         const from = rows[i];
-        const to = rows[i + 1];
-        const kind = kindOf(from, to);
+        const asleep = from.state === 'sleep';
+        const to = asleep ? wakingAfter(rows, i) : rows[i + 1];
+        const kind = asleep ? 'asleep' : kindOf(from, to ?? from);
+        if (!to)
+            continue;
         // On mains the battery says nothing about what the machine draws.
         if (!kind || !from.onBattery || !to.onBattery || from.wh === null || to.wh === null)
             continue;

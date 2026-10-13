@@ -54,6 +54,14 @@ test('a gap in the samples is not counted', () => {
     equal(watts([row(0, 'closed', 30), row(60, 'closed', 20)]).closed, null);
 });
 
+test('a sample taken on waking, before the waking is noted, does not hide the sleep', () => {
+    equal(watts([row(0, 'sleep', 30), row(240, 'open', 28), row(240, 'wake', 28), row(240, 'open', 28)]).asleep, 0.5);
+});
+
+test('a sleep is not measured across the next one', () => {
+    equal(watts([row(0, 'sleep', 30), row(10, 'sleep', 29.9), row(250, 'wake', 27.9)]).asleep, 0.5);
+});
+
 test('a sleep without a waking is not counted', () => {
     equal(watts([row(0, 'sleep', 30), row(300, 'open', 28)]).asleep, null);
 });

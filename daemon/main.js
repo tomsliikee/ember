@@ -59,15 +59,17 @@ function readJson(path) {
     }
 }
 
-// Puts back what an earlier run of the service left changed.
-function restoreLeftovers() {
+// Puts back what an earlier run of the service left changed. A dry run
+// only says so and leaves the note of it where it is.
+function restoreLeftovers(dry) {
     const memory = recall();
     if (isEmpty(memory))
         return;
     note('putting back what an earlier run left changed');
     Freezer.thaw([...memory.paused, ...memory.frozen]);
     Saving.restore(memory.saved);
-    remember({frozen: [], paused: [], saved: {}});
+    if (!dry)
+        remember({frozen: [], paused: [], saved: {}});
 }
 
 class Service {
@@ -325,7 +327,10 @@ class Service {
         this._logind.lock();
         let frozen = [];
         try {
-            frozen = chooseFrozen(Freezer.runningUnits(), Freezer.claudeUnits());
+            // A session the hooks reported keeps running even where its
+            // process is not called "claude".
+            const reported = Object.values(this._instances).map(instance => instance.unit).filter(Boolean);
+            frozen = chooseFrozen(Freezer.runningUnits(), [...Freezer.claudeUnits(), ...reported]);
         } catch (e) {
             note(`could not list the units: ${e.message}`);
         }
@@ -483,10 +488,10 @@ const lidFile = args.includes('--lid-file') ? args[args.indexOf('--lid-file') + 
 setDryRun(dryRun);
 
 if (args.includes('--restore')) {
-    restoreLeftovers();
+    restoreLeftovers(dryRun);
 } else {
     if (!dryRun)
-        restoreLeftovers();
+        restoreLeftovers(false);
     const loop = new GLib.MainLoop(null, false);
     const service = new Service({lidFile, dryRun});
     Gio.bus_own_name(Gio.BusType.SESSION, BUS_NAME, Gio.BusNameOwnerFlags.NONE,

@@ -10,7 +10,9 @@ import {act} from './log.js';
 const UNIT = 'ember-bridge.service';
 const dir = () => GLib.build_filenamev([GLib.get_user_runtime_dir(), 'ember']);
 const beatFile = () => GLib.build_filenamev([dir(), 'alive']);
-const script = () => GLib.build_filenamev([GLib.get_user_data_dir(), 'ember', 'daemon', 'ember-bridge']);
+// Beside the service's own files, wherever they are installed.
+const script = () => GLib.build_filenamev([GLib.path_get_dirname(GLib.path_get_dirname(
+    GLib.filename_from_uri(import.meta.url)[0])), 'ember-bridge']);
 
 function run(command) {
     const [, , , status] = GLib.spawn_command_line_sync(command);
