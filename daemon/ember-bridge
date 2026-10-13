@@ -1,0 +1,13 @@
+#!/bin/sh
+# Stands in for the Ember service while it restarts. The service holds the
+# lid and the sleep through its own process, so both would be let go the
+# moment it ends, and a closed laptop would sleep in the middle of the work.
+# This runs under systemd-inhibit beside the service for as long as the lid
+# is closed, and gives up when the service has not been heard from for a
+# minute: one that does not come back must not keep the machine awake.
+LIMIT=60
+beat="${XDG_RUNTIME_DIR:?}/ember/alive"
+
+while [ -e "$beat" ] && [ $(( $(date +%s) - $(stat -c %Y "$beat") )) -lt "$LIMIT" ]; do
+    sleep 5
+done

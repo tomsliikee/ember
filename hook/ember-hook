@@ -1,0 +1,18 @@
+#!/bin/sh
+# Called by Claude Code's hooks with the event on standard input. It only
+# leaves a note where the Ember service finds it, so a hook costs next to
+# nothing and never fails the session it runs in.
+#
+# The event carries the prompt and the tools' input. None of that is
+# written: jq passes on the four fields Ember needs and drops the rest.
+command -v jq >/dev/null 2>&1 || exit 0
+dir="${XDG_RUNTIME_DIR:-/tmp}/ember/events"
+mkdir -p "$dir" 2>/dev/null || exit 0
+# The control group names the terminal tab or app the session runs in.
+cgroup="$(sed -n 's/^0:://p' /proc/self/cgroup 2>/dev/null)"
+tmp="$dir/.$$.tmp"
+jq -c --arg cgroup "$cgroup" --argjson at "$(date +%s)" \
+    '{at: $at, cgroup: $cgroup, event: {session_id, hook_event_name, cwd, transcript_path}}' \
+    > "$tmp" 2>/dev/null && mv "$tmp" "$dir/$(date +%s%N).$$.json" 2>/dev/null
+rm -f "$tmp" 2>/dev/null
+exit 0

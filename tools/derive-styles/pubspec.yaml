@@ -1,0 +1,9 @@
+name: derive_styles
+description: Derives the colour styles of Toms Expressive Design from their seeds.
+publish_to: none
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  material_color_utilities: ^0.13.0

@@ -1,0 +1,54 @@
+#!/bin/sh
+# Holds the processor back while the lid is closed, and lets it go again.
+# Runs as root, called by the Ember service through pkexec. It takes one of
+# two words and writes fixed values to fixed files; nothing a caller passes
+# ends up in a path or a value.
+set -eu
+
+STATE=/run/ember-helper
+TURBO=/sys/devices/system/cpu/intel_pstate/no_turbo
+SAVING_PREFERENCE=power
+
+preference_files() {
+    ls /sys/devices/system/cpu/cpu[0-9]*/cpufreq/energy_performance_preference 2>/dev/null || true
+}
+
+case "${1:-}" in
+save)
+    # Kept only the first time, so saving twice does not forget the original.
+    if [ ! -d "$STATE" ]; then
+        mkdir -m 700 "$STATE"
+        [ -w "$TURBO" ] && cat "$TURBO" > "$STATE/turbo"
+        first="$(preference_files | head -n 1)"
+        [ -n "$first" ] && cat "$first" > "$STATE/preference"
+    fi
+    [ -w "$TURBO" ] && echo 1 > "$TURBO"
+    for file in $(preference_files); do
+        echo "$SAVING_PREFERENCE" > "$file" 2>/dev/null || true
+    done
+    ;;
+restore)
+    [ -d "$STATE" ] || exit 0
+    if [ -f "$STATE/turbo" ] && [ -w "$TURBO" ]; then
+        # Only the two values the file can hold are ever written back.
+        case "$(cat "$STATE/turbo")" in
+            0) echo 0 > "$TURBO" ;;
+            1) echo 1 > "$TURBO" ;;
+        esac
+    fi
+    if [ -f "$STATE/preference" ]; then
+        case "$(cat "$STATE/preference")" in
+            default|performance|balance_performance|balance_power|power)
+                for file in $(preference_files); do
+                    cat "$STATE/preference" > "$file" 2>/dev/null || true
+                done
+                ;;
+        esac
+    fi
+    rm -rf "$STATE"
+    ;;
+*)
+    echo "usage: ember-helper save|restore" >&2
+    exit 2
+    ;;
+esac

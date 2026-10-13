@@ -1,0 +1,6 @@
+{
+    "uuid": "ember@thomashaiden",
+    "name": "Ember",
+    "description": "Keeps Claude working with the lid closed, with the screen off and everything else at rest.",
+    "shell-version": ["50"]
+}

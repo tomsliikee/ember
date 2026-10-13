@@ -1,0 +1,144 @@
+.em-indicator {
+    spacing: 6px;
+}
+
+.em-content {
+    width: 320px;
+    spacing: $space-3;
+}
+
+.em-tile {
+    padding: $space-4;
+    spacing: $space-2;
+    border-radius: $radius-tile;
+}
+
+.em-section {
+    padding: $space-2 $space-1 0 $space-1;
+}
+
+.em-columns {
+    spacing: $space-5;
+}
+
+.em-segments {
+    spacing: 2px;
+}
+
+/* Fully round means half the 40px height here; St draws 9999px badly. */
+.em-segment {
+    height: 40px;
+}
+
+.em-segment-first {
+    border-radius: $radius-large-increased $radius-small $radius-small $radius-large-increased;
+}
+
+.em-segment-middle {
+    border-radius: $radius-small;
+}
+
+.em-segment-last {
+    border-radius: $radius-small $radius-large-increased $radius-large-increased $radius-small;
+}
+
+.em-segment-selected {
+    border-radius: $radius-large-increased;
+}
+
+/* Rows of one group sit close; only the group's outer corners are wide. */
+.em-rows {
+    spacing: $space-1;
+}
+
+.em-row {
+    padding: $space-3 $space-4;
+    spacing: $space-3;
+    border-radius: $radius-small;
+}
+
+.em-row-first {
+    border-radius: $radius-tile $radius-tile $radius-small $radius-small;
+}
+
+.em-row-last {
+    border-radius: $radius-small $radius-small $radius-tile $radius-tile;
+}
+
+.em-row-only {
+    border-radius: $radius-tile;
+}
+
+.em-setting {
+    padding-top: $space-2;
+}
+
+.em-switch-row {
+    padding-top: $space-2;
+    spacing: $space-3;
+}
+
+.em-switch {
+    border-radius: $radius-large;
+}
+
+.em-swatches {
+    spacing: $space-3;
+}
+
+.em-swatch {
+    border-radius: $radius-large;
+}
+
+.em-overflow {
+    width: 48px;
+    height: 28px;
+    border-radius: 14px;
+}
+
+.em-footer {
+    padding: 0 $space-1;
+}
+
+/* themed */
+
+.em-popup {
+    padding: $space-4;
+    border: none;
+    border-radius: $radius-extra-large;
+    background-color: $surface-container;
+    color: $on-surface;
+}
+
+.em-popup .em-tile,
+.em-popup .em-row {
+    background-color: $surface-bright;
+}
+
+.em-popup .em-tile-loud {
+    background-color: $primary-container;
+    color: $on-primary-container;
+}
+
+.em-popup .em-muted {
+    color: $on-surface-variant;
+}
+
+.em-popup .em-tile-loud .em-muted {
+    color: $on-primary-container;
+}
+
+.em-popup .em-segment {
+    background-color: $primary-container;
+    color: $on-primary-container;
+}
+
+.em-popup .em-segment-selected {
+    background-color: $primary;
+    color: $on-primary;
+}
+
+.em-popup .em-overflow:hover,
+.em-popup .em-overflow:focus {
+    background-color: $surface-container-highest;
+}

@@ -1,0 +1,15 @@
+[Unit]
+Description=Ember: keeps Claude working with the lid closed and everything else at rest
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/gjs -m %h/.local/share/ember/daemon/main.js
+# Whatever the service changed is put back when it ends, however it ends.
+ExecStopPost=/usr/bin/gjs -m %h/.local/share/ember/daemon/main.js --restore
+Restart=on-failure
+RestartSec=5
+Slice=session.slice
+
+[Install]
+WantedBy=graphical-session.target
